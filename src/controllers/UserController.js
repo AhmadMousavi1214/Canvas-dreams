@@ -12,7 +12,7 @@ const UserController = {
 
             // Check if user exists
             // correct here when the user enterd the email and pass it dont have to say the user exist or not !
-            
+
             const user = await User.findOne({ where: { email } });
             if (!user) {
                 return res.status(401).json({ error: "Invalid email or password" });
@@ -65,7 +65,7 @@ const UserController = {
     // we do hashing in the model before creating its better !
     async createUser(req, res) {
         try {
-            const { username, email, password } = req.body;
+            const { username, email, password, role } = req.body;
 
             // Validation
             if (!username || !email || !password) {
@@ -78,14 +78,19 @@ const UserController = {
                 return res.status(400).json({ error: 'Email already exists' });
             }
 
-            // Create new user
-            const user = await User.create({ username, email, password });
+            // Determine the role: only superusers can assign roles, others default to "user"
+            const userRole = req.user?.role === 'superuser' ? role || 'user' : 'user';
+
+            // Create new user with assigned role
+            const user = await User.create({ username, email, password, role: userRole });
+
             res.status(201).json({ message: 'User created successfully', user });
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Error creating user' });
         }
     },
+
 
     // Update user info
     async updateUser(req, res) {
